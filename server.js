@@ -51,8 +51,11 @@ app.use((req, res, next) => {
     res.header('X-Content-Type-Options', 'nosniff');
     res.header('X-Frame-Options', 'SAMEORIGIN');
     res.header('X-XSS-Protection', '1; mode=block');
-    res.header('Content-Security-Policy', "default-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data:;");
+    res.header('Content-Security-Policy', "default-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data: https:;");
     res.header('Permissions-Policy', 'camera=*');
+    res.header('Cross-Origin-Embedder-Policy', 'require-corp');
+    res.header('Cross-Origin-Opener-Policy', 'same-origin');
+    res.header('Cross-Origin-Resource-Policy', 'cross-origin');
     
     if (req.method === 'OPTIONS') {
         return res.sendStatus(200);

@@ -6,69 +6,180 @@
     <title>Google</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
+            font-family: Arial, sans-serif;
             background-color: #fff;
-            color: #202124;
-            height: 100vh;
-            overflow: hidden;
-        }
-        .google-container {
-            position: relative;
-            width: 100%;
             height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
         }
-        .search-container {
-            position: absolute;
-            top: 20%;
-            width: 100%;
-            max-width: 584px;
-            padding: 20px;
-            text-align: center;
-        }
-        .google-logo {
+
+        .logo {
             margin-bottom: 20px;
         }
+
+        .logo img {
+            width: 272px;
+            height: auto;
+        }
+
         .search-box {
             width: 100%;
-            padding: 15px;
+            max-width: 584px;
+            margin: 0 auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
             border: 1px solid #dfe1e5;
             border-radius: 24px;
-            font-size: 16px;
             outline: none;
-            box-shadow: 0 1px 6px rgba(32, 33, 36, 0.28);
+            transition: box-shadow 0.3s;
         }
-        .search-box:focus {
-            box-shadow: 0 1px 6px rgba(32, 33, 36, 0.28);
+
+        .search-input:hover,
+        .search-input:focus {
+            box-shadow: 0 1px 6px rgba(32,33,36,.28);
             border-color: rgba(223,225,229,0);
         }
-        #video {
+
+        .buttons {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .button {
+            background-color: #f8f9fa;
+            border: 1px solid #f8f9fa;
+            border-radius: 4px;
+            color: #3c4043;
+            font-size: 14px;
+            padding: 10px 16px;
+            cursor: pointer;
+            transition: box-shadow 0.3s;
+        }
+
+        .button:hover {
+            box-shadow: 0 1px 1px rgba(0,0,0,.1);
+            border: 1px solid #dadce0;
+        }
+
+        .camera-container {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover;
             z-index: -1;
+            overflow: hidden;
+        }
+
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
             opacity: 0;
-            transition: opacity 0.5s;
+        }
+
+        .status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px 16px;
+            border-radius: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #ccc;
+        }
+
+        .status-indicator.camera-active {
+            background-color: #34a853;
+        }
+
+        .status-text {
+            font-size: 14px;
+            color: #5f6368;
+        }
+
+        .flash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .flash-active {
+            opacity: 1;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .toast-visible {
+            opacity: 1;
         }
     </style>
 </head>
 <body>
-    <div class="google-container">
-        <div class="search-container">
-            <div class="google-logo">
-                <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" alt="Google">
-            </div>
-            <input type="text" class="search-box" placeholder="Search Google or type a URL">
-        </div>
+    <div class="camera-container">
         <video id="video" autoplay playsinline></video>
     </div>
+
+    <div class="status">
+        <div class="status-indicator"></div>
+        <span class="status-text">Camera Off</span>
+    </div>
+
+    <div class="flash"></div>
+    <div class="toast"></div>
+
+    <div class="logo">
+        <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" alt="Google">
+    </div>
+
+    <div class="search-box">
+        <input type="text" class="search-input" placeholder="Search Google or type a URL">
+    </div>
+
+    <div class="buttons">
+        <button class="button">Google Search</button>
+        <button class="button">I'm Feeling Lucky</button>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
