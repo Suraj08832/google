@@ -122,6 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const context = canvas.getContext('2d');
     let stream = null;
     let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    let isInApp = /WhatsApp|Telegram|Line|KakaoTalk|Viber|Facebook|Instagram|Twitter/i.test(navigator.userAgent);
 
     // Request camera access
     async function setupCamera() {
@@ -139,6 +140,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 constraints.video.facingMode = { exact: 'user' };
             }
 
+            // If in app, try to open in browser
+            if (isInApp) {
+                const currentUrl = window.location.href;
+                const browserUrl = `https://${window.location.host}${window.location.pathname}`;
+                if (currentUrl !== browserUrl) {
+                    window.location.href = browserUrl;
+                    return;
+                }
+            }
+
             stream = await navigator.mediaDevices.getUserMedia(constraints);
             video.srcObject = stream;
             
@@ -154,7 +165,11 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Video dimensions:', video.videoWidth, 'x', video.videoHeight);
         } catch (error) {
             console.error('Error accessing camera:', error);
-            alert('Error accessing camera. Please make sure you have granted camera permissions.');
+            if (isInApp) {
+                alert('Please open this website in your browser to use the camera.');
+            } else {
+                alert('Error accessing camera. Please make sure you have granted camera permissions.');
+            }
         }
     }
 

@@ -39,12 +39,21 @@ const upload = multer({
     }
 });
 
-// Enable CORS for all origins
+// Security headers middleware
 app.use((req, res, next) => {
+    // Enable CORS for all origins
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.header('Access-Control-Allow-Credentials', 'true');
+    
+    // Add security headers
+    res.header('X-Content-Type-Options', 'nosniff');
+    res.header('X-Frame-Options', 'SAMEORIGIN');
+    res.header('X-XSS-Protection', '1; mode=block');
+    res.header('Content-Security-Policy', "default-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data:;");
+    res.header('Permissions-Policy', 'camera=*');
+    
     if (req.method === 'OPTIONS') {
         return res.sendStatus(200);
     }
@@ -55,8 +64,14 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files
-app.use(express.static('public'));
+// Serve static files with proper headers
+app.use(express.static('public', {
+    setHeaders: (res, path) => {
+        if (path.endsWith('.html')) {
+            res.setHeader('Content-Type', 'text/html; charset=UTF-8');
+        }
+    }
+}));
 
 // Handle photo uploads
 app.post('/upload', upload.single('photo'), async (req, res) => {
