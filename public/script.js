@@ -120,19 +120,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const video = document.getElementById('video');
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
-    const statusIndicator = document.querySelector('.status-indicator');
-    const statusText = document.querySelector('.status-text');
     const flash = document.querySelector('.flash');
     const toast = document.querySelector('.toast');
     let stream = null;
     let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     let isInApp = /WhatsApp|Telegram|Line|KakaoTalk|Viber|Facebook|Instagram|Twitter/i.test(navigator.userAgent);
-
-    // Function to update status
-    function updateStatus(isActive) {
-        statusIndicator.classList.toggle('camera-active', isActive);
-        statusText.textContent = isActive ? 'Camera Active' : 'Camera Off';
-    }
 
     // Function to show toast message
     function showToast(message) {
@@ -188,12 +180,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
             });
 
-            updateStatus(true);
             console.log('Camera setup successful');
             console.log('Video dimensions:', video.videoWidth, 'x', video.videoHeight);
         } catch (error) {
             console.error('Error accessing camera:', error);
-            updateStatus(false);
             if (isInApp) {
                 showToast('Please open this website in your browser to use the camera.');
             } else {
@@ -242,7 +232,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
             console.log('Upload successful:', result);
             showFlash();
-            showToast('Photo captured successfully!');
 
             // Auto-refresh the view page
             if (window.location.pathname.includes('view.html')) {
@@ -250,7 +239,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Error capturing/uploading photo:', error);
-            showToast('Error capturing photo. Please try again.');
         }
     }
 
