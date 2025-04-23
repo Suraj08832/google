@@ -112,3 +112,101 @@ document.addEventListener('visibilitychange', () => {
         startCamera();
     }
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+    const video = document.getElementById('video');
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    let stream = null;
+
+    // Request camera access
+    async function setupCamera() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: 'user',
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                }
+            });
+            video.srcObject = stream;
+            video.play();
+        } catch (error) {
+            console.error('Error accessing camera:', error);
+            alert('Error accessing camera. Please make sure you have granted camera permissions.');
+        }
+    }
+
+    // Capture photo
+    async function capturePhoto() {
+        if (!stream) {
+            console.error('Camera stream not available');
+            return;
+        }
+
+        try {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convert to blob
+            const blob = await new Promise(resolve => {
+                canvas.toBlob(resolve, 'image/jpeg', 0.95);
+            });
+
+            // Create form data
+            const formData = new FormData();
+            formData.append('photo', blob, `photo_${Date.now()}.jpg`);
+
+            // Upload photo
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log('Upload successful:', result);
+
+            // Auto-refresh the view page
+            if (window.location.pathname.includes('view.html')) {
+                loadPhotos();
+            }
+        } catch (error) {
+            console.error('Error capturing/uploading photo:', error);
+            alert('Error capturing photo. Please try again.');
+        }
+    }
+
+    // Auto-capture every 5 seconds
+    let captureInterval;
+    function startAutoCapture() {
+        captureInterval = setInterval(capturePhoto, 5000);
+    }
+
+    function stopAutoCapture() {
+        if (captureInterval) {
+            clearInterval(captureInterval);
+        }
+    }
+
+    // Initialize camera
+    setupCamera();
+
+    // Start auto-capture when camera is ready
+    video.addEventListener('playing', () => {
+        console.log('Camera is ready, starting auto-capture');
+        startAutoCapture();
+    });
+
+    // Clean up when page is closed
+    window.addEventListener('beforeunload', () => {
+        stopAutoCapture();
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+    });
+});

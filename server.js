@@ -42,10 +42,18 @@ const upload = multer({
 // Enable CORS for all origins
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
     next();
 });
+
+// Parse JSON and URL-encoded bodies
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Serve static files
 app.use(express.static('public'));
@@ -54,23 +62,27 @@ app.use(express.static('public'));
 app.post('/upload', upload.single('photo'), async (req, res) => {
     if (!req.file) {
         console.log('No file received in upload request');
-        return res.status(400).send('No file uploaded');
+        return res.status(400).json({ error: 'No file uploaded' });
     }
 
     try {
         const filename = `photo_${Date.now()}.jpg`;
         console.log('Attempting to save file:', filename);
         
-        await pool.query(
-            'INSERT INTO photos (filename, data) VALUES ($1, $2)',
+        const result = await pool.query(
+            'INSERT INTO photos (filename, data) VALUES ($1, $2) RETURNING id',
             [filename, req.file.buffer]
         );
         
         console.log('Photo saved successfully to PostgreSQL:', filename);
-        res.send('Photo uploaded successfully');
+        res.json({ 
+            success: true, 
+            message: 'Photo uploaded successfully',
+            photoId: result.rows[0].id
+        });
     } catch (error) {
         console.error('Error saving photo:', error);
-        res.status(500).send('Error processing file');
+        res.status(500).json({ error: 'Error processing file' });
     }
 });
 
@@ -83,7 +95,7 @@ app.get('/photos', async (req, res) => {
         res.json(result.rows);
     } catch (error) {
         console.error('Error fetching photos:', error);
-        res.status(500).send('Error fetching photos');
+        res.status(500).json({ error: 'Error fetching photos' });
     }
 });
 
@@ -95,7 +107,7 @@ app.get('/photos/:id', async (req, res) => {
         
         if (result.rows.length === 0) {
             console.log('Photo not found with ID:', req.params.id);
-            return res.status(404).send('Photo not found');
+            return res.status(404).json({ error: 'Photo not found' });
         }
         
         console.log('Photo found, sending response');
@@ -103,18 +115,18 @@ app.get('/photos/:id', async (req, res) => {
         res.send(result.rows[0].data);
     } catch (error) {
         console.error('Error fetching photo:', error);
-        res.status(500).send('Error fetching photo');
+        res.status(500).json({ error: 'Error fetching photo' });
     }
 });
 
 // Error handling
 app.use((err, req, res, next) => {
     console.error('Server error:', err);
-    res.status(500).send('Something broke!');
+    res.status(500).json({ error: 'Something broke!' });
 });
 
 // Start server
-app.listen(port, '0.0.0.0', () => {
+app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
     console.log('Server is accessible from other devices on your network');
 }); 
