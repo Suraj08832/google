@@ -69,6 +69,32 @@ app.post('/upload', upload.single('photo'), async (req, res) => {
     }
 });
 
+// Get all photos
+app.get('/photos', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT id, filename, created_at FROM photos ORDER BY created_at DESC');
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send('Error fetching photos');
+    }
+});
+
+// Get a specific photo
+app.get('/photos/:id', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT data FROM photos WHERE id = $1', [req.params.id]);
+        if (result.rows.length === 0) {
+            return res.status(404).send('Photo not found');
+        }
+        res.set('Content-Type', 'image/jpeg');
+        res.send(result.rows[0].data);
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send('Error fetching photo');
+    }
+});
+
 // Error handling
 app.use((err, req, res, next) => {
     console.error('Error:', err);
